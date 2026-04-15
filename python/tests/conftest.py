@@ -14,6 +14,7 @@ from arro3.core import Array, DataType, Field, Schema, Table
 from azure.storage import blob
 
 from deltalake import DeltaTable, WriterProperties, write_deltalake
+from deltalake._internal import _FLOAT16
 
 if TYPE_CHECKING:
     import pyarrow as pa
@@ -236,6 +237,11 @@ def sample_data_pyarrow() -> "pa.Table":
     nrows = 5
     import pyarrow as pa
 
+    if _FLOAT16:
+        float16_data = {"float16": pa.array([float(x) for x in range(nrows)], pa.float16()),}
+    else:
+        float16_data = {}
+
     return pa.table(
         {
             "utf8": pa.array([str(x) for x in range(nrows)]),
@@ -261,7 +267,7 @@ def sample_data_pyarrow() -> "pa.Table":
             ),
             # NOTE: https://github.com/apache/arrow-rs/issues/477
             #'map': pa.array([[(str(y), y) for y in range(x)] for x in range(nrows)], pa.map_(pa.string(), pa.int64())),
-        }
+        } | float16_data
     )
 
 

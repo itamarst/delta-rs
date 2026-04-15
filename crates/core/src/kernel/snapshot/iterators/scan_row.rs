@@ -307,6 +307,14 @@ pub(crate) fn parse_partitions(
                                 _ => panic!("unexpected scalar type"),
                             }))) as ArrayRef
                         }
+                        #[cfg(feature = "float16")]
+                        PrimitiveType::Float16 => {
+                            Arc::new(Float16Array::from_iter(values.iter().map(|v| match v {
+                                Scalar::Float16(f) => Some(*f),
+                                Scalar::Null(_) => None,
+                                _ => panic!("unexpected scalar type"),
+                            }))) as ArrayRef
+                        }
                         PrimitiveType::Float => {
                             Arc::new(Float32Array::from_iter(values.iter().map(|v| match v {
                                 Scalar::Float(f) => Some(*f),

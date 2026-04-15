@@ -147,16 +147,31 @@ impl MetadataExt for Metadata {
 }
 
 /// checks if table contains timestamp_ntz in any field including nested fields.
-pub fn contains_timestampntz<'a>(mut fields: impl Iterator<Item = &'a StructField>) -> bool {
-    fn _check_type(dtype: &DataType) -> bool {
+pub fn contains_timestampntz<'a>(fields: impl Iterator<Item = &'a StructField>) -> bool {
+    contains_datatype(&DataType::TIMESTAMP_NTZ, fields)
+}
+
+#[cfg(feature = "float16")]
+/// checks if table contains float16 in any field including nested fields.
+pub fn contains_float16<'a>(fields: impl Iterator<Item = &'a StructField>) -> bool {
+    contains_datatype(&DataType::FLOAT16, fields)
+}
+
+fn contains_datatype<'a>(
+    required_dtype: &DataType,
+    mut fields: impl Iterator<Item = &'a StructField>,
+) -> bool {
+    fn _check_type(dtype: &DataType, required_dtype: &DataType) -> bool {
         match dtype {
-            &DataType::TIMESTAMP_NTZ => true,
-            DataType::Array(inner) => _check_type(inner.element_type()),
-            DataType::Struct(inner) => inner.fields().any(|f| _check_type(f.data_type())),
+            _ if dtype == required_dtype => true,
+            DataType::Array(inner) => _check_type(inner.element_type(), required_dtype),
+            DataType::Struct(inner) => inner
+                .fields()
+                .any(|f| _check_type(f.data_type(), required_dtype)),
             _ => false,
         }
     }
-    fields.any(|f| _check_type(f.data_type()))
+    fields.any(|f| _check_type(f.data_type(), required_dtype))
 }
 
 /// Extension trait for delta-kernel Protocol action.
@@ -412,6 +427,11 @@ impl ProtocolInner {
             self = self.enable_timestamp_ntz()
         }
 
+        #[cfg(feature = "float16")]
+        if self.contains_f16(schema.fields()) {
+            self = self.enable_float16();
+        }
+
         if !generated_cols.is_empty() {
             self = self.enable_generated_columns()
         }
@@ -562,6 +582,20 @@ impl ProtocolInner {
     fn enable_timestamp_ntz(mut self) -> Self {
         self = self.append_reader_features([TableFeature::TimestampWithoutTimezone]);
         self = self.append_writer_features([TableFeature::TimestampWithoutTimezone]);
+        self
+    }
+
+    #[cfg(feature = "float16")]
+    /// checks if table contains float16 in any field including nested fields.
+    fn contains_float16<'a>(&self, fields: impl Iterator<Item = &'a StructField>) -> bool {
+        contains_float16(fields)
+    }
+
+    #[cfg(feature = "float16")]
+    /// Enable float16 in the protocol
+    fn enable_float16(mut self) -> Self {
+        self = self.append_reader_features([TableFeature::Float16]);
+        self = self.append_writer_features([TableFeature::Float16]);
         self
     }
 

@@ -14,6 +14,7 @@ from arro3.core import Schema as ArrowSchema
 
 from deltalake import CommitProperties, DeltaTable, Transaction, write_deltalake
 from deltalake._internal import (
+    _FLOAT16,
     CommitFailedError,
     Field,
     PrimitiveType,
@@ -513,7 +514,8 @@ def test_roundtrip_metadata(tmp_path: pathlib.Path, sample_table: Table):
         # "binary",
         "date32",
         "timestamp",
-    ],
+    ]
+    + (["float16"] if _FLOAT16 else []),
 )
 def test_roundtrip_partitioned(
     tmp_path: pathlib.Path, sample_data_pyarrow: "pa.Table", column: str
@@ -905,6 +907,9 @@ def test_writer_stats(existing_table: DeltaTable, sample_data_pyarrow: "pa.Table
     expected_mins["decimal"] = 10.0
     expected_mins["date32"] = "2022-01-01"
 
+    if _FLOAT16:
+        expected_mins["float16"] = -0.0
+
     assert stats["minValues"] == expected_mins
 
     expected_maxs = {
@@ -922,6 +927,9 @@ def test_writer_stats(existing_table: DeltaTable, sample_data_pyarrow: "pa.Table
     # PyArrow added support for decimal and date32 in 8.0.0
     expected_maxs["decimal"] = 14.0
     expected_maxs["date32"] = "2022-01-05"
+
+    if _FLOAT16:
+        expected_maxs["float16"] = 4.0
 
     assert stats["maxValues"] == expected_maxs
 

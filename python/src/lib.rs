@@ -3062,6 +3062,8 @@ fn _internal(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<filesystem::ObjectInputFile>()?;
     m.add_class::<filesystem::ObjectOutputStream>()?;
     m.add_class::<features::TableFeatures>()?;
+
+    m.add("_FLOAT16", cfg!(feature = "float16"));
     Ok(())
 }
 
