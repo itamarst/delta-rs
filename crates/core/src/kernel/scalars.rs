@@ -318,7 +318,7 @@ impl ScalarExt for Scalar {
             Self::Integer(i) => Value::Number(serde_json::Number::from(*i)),
             Self::Long(l) => Value::Number(serde_json::Number::from(*l)),
             #[cfg(feature = "float16")]
-            Self::Float16(f) => Value::Number(serde_json::Number::from_f64(f.into()).unwrap()),
+            Self::Float16(f) => Value::Number(serde_json::Number::from_f64(f.to_f64()).unwrap()),
             Self::Float(f) => Value::Number(serde_json::Number::from_f64(*f as f64).unwrap()),
             Self::Double(d) => Value::Number(serde_json::Number::from_f64(*d).unwrap()),
             Self::Boolean(b) => Value::Bool(*b),
@@ -409,6 +409,8 @@ mod tests {
     use super::*;
     use arrow_array::*;
     use delta_kernel::expressions::Scalar;
+    #[cfg(feature = "float16")]
+    use half::f16;
 
     #[test]
     fn test_encode_partition_value() {

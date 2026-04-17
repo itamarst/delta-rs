@@ -18,8 +18,6 @@ use delta_kernel::expressions::{
     UnaryPredicate, UnaryPredicateOp, VariadicExpressionOp,
 };
 use delta_kernel::schema::DataType;
-#[cfg(feature = "float16")]
-use half::f16;
 use itertools::Itertools;
 
 use crate::delta_datafusion::engine::expressions::to_json::to_json;
@@ -238,6 +236,8 @@ mod tests {
     use delta_kernel::expressions::ColumnName;
     use delta_kernel::expressions::{ArrayData, BinaryExpression, MapData, Scalar, StructData};
     use delta_kernel::schema::{ArrayType, DataType, MapType, StructField, StructType};
+    #[cfg(feature = "float16")]
+    use half::f16;
 
     use super::*;
 
@@ -254,7 +254,7 @@ mod tests {
             (Scalar::Long(42), ScalarValue::Int64(Some(42))),
             #[cfg(feature = "float16")]
             (
-                Scalar::Float16(42.0),
+                Scalar::Float16(f16::from_f32(42.0)),
                 ScalarValue::Float16(Some(f16::from_f32(42.0))),
             ),
             (Scalar::Float(42.0), ScalarValue::Float32(Some(42.0))),
@@ -438,11 +438,6 @@ mod tests {
             ),
             (Expression::Literal(Scalar::Integer(42)), lit(42)),
             (Expression::Literal(Scalar::Long(42)), lit(42i64)),
-            #[cfg(feature = "float16")]
-            (
-                Expression::Literal(Scalar::Float16(f16::from_f32(42.0))),
-                lit(f16::from_f32(42.0)),
-            ),
             (Expression::Literal(Scalar::Float(42.0)), lit(42.0f32)),
             (Expression::Literal(Scalar::Double(42.0)), lit(42.0)),
             (

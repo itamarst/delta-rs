@@ -343,7 +343,22 @@ impl StatsScalar {
             }
             #[cfg(feature = "float16")]
             (Statistics::FixedLenByteArray(v), Some(LogicalType::Float16)) => {
-                Ok(Self::Float16(get_stat!(v)))
+                let bytes = if use_min {
+                    v.min_bytes_opt()
+                } else {
+                    v.max_bytes_opt()
+                }
+                .unwrap_or_default();
+
+                let bytes: Result<[u8; 2], _> = bytes.try_into();
+                if let Ok(bytes) = bytes {
+                    Ok(Self::Float16(f16::from_le_bytes(bytes)))
+                } else {
+                    Err(DeltaWriterError::StatsParsingFailed {
+                        debug_value: format!("{bytes:?}"),
+                        logical_type: Some(LogicalType::Float16),
+                    })
+                }
             }
             (Statistics::FixedLenByteArray(v), Some(LogicalType::Decimal { scale, precision })) => {
                 let val = if use_min {
@@ -429,7 +444,7 @@ impl From<StatsScalar> for serde_json::Value {
             StatsScalar::Int32(v) => serde_json::Value::from(v),
             StatsScalar::Int64(v) => serde_json::Value::from(v),
             #[cfg(feature = "float16")]
-            StatsScalar::Float16(v) => serde_json::Value::from(v),
+            StatsScalar::Float16(v) => serde_json::Value::from(v.to_f32()),
             StatsScalar::Float32(v) => serde_json::Value::from(v),
             StatsScalar::Float64(v) => serde_json::Value::from(v),
             StatsScalar::Date(v) => serde_json::Value::from(v.format("%Y-%m-%d").to_string()),

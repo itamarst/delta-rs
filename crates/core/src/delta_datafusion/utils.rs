@@ -467,6 +467,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "float16")]
     #[test]
     fn test_float16_coercion() {
         let schema = setup_test_schema();

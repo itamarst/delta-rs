@@ -428,7 +428,7 @@ impl ProtocolInner {
         }
 
         #[cfg(feature = "float16")]
-        if self.contains_f16(schema.fields()) {
+        if self.contains_float16(schema.fields()) {
             self = self.enable_float16();
         }
 
@@ -750,6 +750,10 @@ impl TableFeatures {
                     | TableFeature::VariantShreddingPreview => {
                         (Some(feature.clone()), Some(feature))
                     }
+
+                    // Cargo-gated features
+                    #[cfg(feature = "float16")]
+                    TableFeature::Float16 => (Some(feature.clone()), Some(feature)),
 
                     // Unknown features
                     TableFeature::Unknown(_) => (None, None),

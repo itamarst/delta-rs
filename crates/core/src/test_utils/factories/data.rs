@@ -128,8 +128,10 @@ pub fn generate_random_array(
             let max_val = max_val
                 .and_then(|max| Float16.parse_scalar(&max).ok())
                 .unwrap_or(Scalar::Float16(f16::from_f32(10.1)));
-            let between = match (min_val, max_val) {
-                (Scalar::Float16(min), Scalar::Float16(max)) => Uniform::from(min..=max),
+            let between: Uniform<f32> = match (min_val, max_val) {
+                (Scalar::Float16(min), Scalar::Float16(max)) => {
+                    Uniform::from(min.to_f32()..=max.to_f32())
+                }
                 _ => unreachable!(),
             };
             let arr = Float16Array::from(

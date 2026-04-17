@@ -84,6 +84,8 @@ mod local {
     use deltalake_core::{
         delta_datafusion::DeltaLogicalCodec, logstore::default_logstore, writer::JsonWriter,
     };
+    #[cfg(feature = "float16")]
+    use half::f16;
     use object_store::local::LocalFileSystem;
 
     #[tokio::test]
@@ -748,7 +750,7 @@ mod local {
             #[cfg(feature = "float16")]
             Arc::new(Float16Array::from_iter(
                 (0..not_null_rows)
-                    .map(|x| Some(f16::from_f32(x + offset)))
+                    .map(|x| Some(f16::from_f32((x + offset) as f32)))
                     .chain((0..null_rows).map(|_| None)),
             )),
             Arc::new(BooleanArray::from_iter(
@@ -884,8 +886,6 @@ mod local {
             TestCase::new("int16", |value| lit(value as i16)),
             TestCase::new("int8", |value| lit(value as i8)),
             TestCase::new("float64", |value| lit(value as f64)),
-            #[configure(feature = "float16")]
-            TestCase::new("float16", |value| lit(f16::from_f32(value as f32))),
             TestCase::new("timestamp", |value| {
                 lit(TimestampMicrosecond(Some(value * 1_000_000), None))
             }),
@@ -977,8 +977,6 @@ mod local {
             TestCase::new_wrapped("int8", |value| lit(value as i8)),
             TestCase::new_wrapped("float64", |value| lit(value as f64)),
             TestCase::new_wrapped("float32", |value| lit(value as f32)),
-            #[configure(feature = "float16")]
-            TestCase::new_wrapped("float16", |value| lit(f16::from_f32(value as f32))),
             TestCase::new_wrapped("timestamp", |value| {
                 lit(TimestampMicrosecond(Some(value * 1_000_000), None))
             }),
@@ -1016,7 +1014,7 @@ mod local {
                 || column == "binary"
                 || column == "timestamp"
                 || column == "date"
-                || (cfg!(feature == "float16") && column == "float16")
+                || (cfg!(feature = "float16") && column == "float16")
             {
                 continue;
             }

@@ -2383,6 +2383,8 @@ fn scalar_to_py<'py>(value: &Scalar, py_date: &Bound<'py, PyAny>) -> PyResult<Bo
         Short(val) => val.into_py_any(py)?,
         Integer(val) => val.into_py_any(py)?,
         Long(val) => val.into_py_any(py)?,
+        #[cfg(feature = "float16")]
+        Float16(val) => val.to_f64().into_py_any(py)?,
         Float(val) => val.into_py_any(py)?,
         Double(val) => val.into_py_any(py)?,
         Timestamp(_) => {
@@ -3063,7 +3065,7 @@ fn _internal(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<filesystem::ObjectOutputStream>()?;
     m.add_class::<features::TableFeatures>()?;
 
-    m.add("_FLOAT16", cfg!(feature = "float16"));
+    m.add("_FLOAT16", cfg!(feature = "float16"))?;
     Ok(())
 }
 
